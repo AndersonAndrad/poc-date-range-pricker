@@ -1,9 +1,17 @@
 <div class="container">
   <div class="header">
     <div>{{getFullMonth()}} - {{currentYear}}</div>
-    <div>
-      <button (click)="previousMonth()">previous</button>
-      <button (click)="nextMonth()">next</button>
+    <div class="buttons">
+      <button (click)="previousMonth()">
+        <span class="material-symbols-outlined">
+          chevron_left
+        </span>
+      </button>
+      <button (click)="nextMonth()">
+        <span class="material-symbols-outlined">
+          chevron_right
+        </span>
+      </button>
     </div>
   </div>
   <table>
@@ -17,9 +25,6 @@
     <th>s</th>
     </thead>
     <tbody>
-    <tr>
-      <td colspan="7">{{getSmallMonth()}}</td>
-    </tr>
     <tr *ngFor="let week of days">
       <td *ngFor="let day of week">
         <button
@@ -30,6 +35,7 @@
         >
           <spand
             class="span"
+            *ngIf="day.day"
             [ngClass]="{
             inRange: day.inRange,
             selected: day.selected}">
