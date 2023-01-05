@@ -1,9 +1,9 @@
 <div class="container">
   <div class="header">
-    <div>current month</div>
+    <div>{{getFullMonth()}} - {{currentYear}}</div>
     <div>
-      <button><</button>
-      <button>></button>
+      <button (click)="previousMonth()">previous</button>
+      <button (click)="nextMonth()">next</button>
     </div>
   </div>
   <table>
@@ -18,7 +18,7 @@
     </thead>
     <tbody>
     <tr>
-      <td colspan="7">JAN</td>
+      <td colspan="7">{{getSmallMonth()}}</td>
     </tr>
     <tr *ngFor="let week of days">
       <td *ngFor="let day of week">

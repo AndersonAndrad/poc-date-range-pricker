@@ -8,16 +8,16 @@ import {Component} from '@angular/core';
 export class AppComponent {
 
   constructor() {
-    this.makeDays()
+    this.makeDays(new Date(this.currentYear, this.currentMonth))
   }
 
   private date = new Date();
 
   private readonly weekday = [0, 1, 2, 3, 4, 5, 6]
 
-  private currentYear = this.date.getFullYear()
+  public currentYear = this.date.getFullYear()
 
-  private currentMonth = this.date.getMonth()
+  public currentMonth = this.date.getMonth()
 
   private allDays: any[] = []
 
@@ -26,11 +26,11 @@ export class AppComponent {
 
   public days: any;
 
-  getLastDayOfMonth(year: any, month: any) {
+  getLastDayOfMonth(year: number, month: number) {
     return new Date(year, month + 1, 0);
   }
 
-  getFirstDayOfMonth(year: any, month: any) {
+  getFirstDayOfMonth(year: number, month: number) {
     return new Date(year, month, 1);
   }
 
@@ -77,8 +77,6 @@ export class AppComponent {
   public verifyRange() {
     this.days.map((week: IDay[]) => {
       week.map(day => {
-
-
         if (
           this.startDate &&
           this.endDate &&
@@ -93,22 +91,47 @@ export class AppComponent {
     this.days.map((week: IDay[]) => {
       week.map(day => {
         if(day.id === dayId) return
-
         day.selected = false;
         day.inRange = false;
       })
     })
   }
 
-  public makeDays() {
+  public previousMonth(){
+    this.currentMonth--
+
+    if(this.currentMonth < 0){
+      this.currentMonth = 11
+      this.currentYear--
+    }
+
+    const newDate = new Date(this.currentYear, this.currentMonth)
+
+    this.makeDays(newDate)
+  }
+
+  public nextMonth(){
+    this.currentMonth++
+
+    if(this.currentMonth > 11){
+      this.currentMonth = 0
+      this.currentYear++
+    }
+
+    const newDate = new Date(this.currentYear, this.currentMonth)
+
+    this.makeDays(newDate)
+  }
+
+  public makeDays(date: Date) {
     const lastDayCurrentMonth = this.getLastDayOfMonth(
-      this.date.getFullYear(),
-      this.date.getMonth(),
+      this.currentYear,
+      this.currentMonth,
     );
 
     const firstDayCurrentMonth = this.getFirstDayOfMonth(
-      this.date.getFullYear(),
-      this.date.getMonth(),
+      this.currentYear,
+      this.currentMonth,
     );
 
     const startWeekdays = this.weekday[firstDayCurrentMonth.getDay()]
@@ -135,7 +158,10 @@ export class AppComponent {
       matrix[k].push({
         id: this.base64(),
         day: list[i],
-        fullDate: new Date(this.currentYear, this.currentMonth + 1, list[i], 0, 0, 0, 0),
+        fullDate: new Date(
+          this.currentYear,
+          this.currentMonth,
+          list[i], 0, 0, 0, 0),
         inRange: false,
         selected: false
       });
@@ -160,6 +186,22 @@ export class AppComponent {
 
     return this.endDate.id === dayId
   }
+
+  public getFullMonth(){
+    // if((this.currentMonth - 1) < 0){
+    //   return fullMonth[0]
+    // }
+
+    return fullMonth[this.currentMonth]
+  }
+
+  public getSmallMonth(){
+    // if((this.currentMonth) < 0){
+    //   return smallMonth[0]
+    // }
+
+    return smallMonth[this.currentMonth]
+  }
 }
 
 interface IDay {
@@ -169,3 +211,32 @@ interface IDay {
   inRange: boolean;
   selected: boolean;
 }
+
+const fullMonth= [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December"
+];
+
+const smallMonth = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"]
