@@ -8,7 +8,7 @@ import {Component} from '@angular/core';
 export class AppComponent {
 
   constructor() {
-    this.makeDays(new Date(this.currentYear, this.currentMonth))
+    this.makeDays()
   }
 
   private date = new Date();
@@ -22,7 +22,9 @@ export class AppComponent {
   private allDays: any[] = []
 
   private startDate: IDay | undefined = undefined;
-  private endDate: IDay | undefined = undefined;
+  public endDate: IDay | undefined = undefined;
+
+  public months = new Map<string, IDay[]>();
 
   public days: any;
 
@@ -37,46 +39,86 @@ export class AppComponent {
   private firstSelection = false;
 
   public selectDay(selectedDay: IDay) {
-    this.days.map((week: IDay[]) => {
-      week.map(day => {
-        if (day.id === selectedDay.id) {
-          if (!this.startDate) {
-            day.selected = true;
-            this.startDate = day;
-            return
-          }
+    const monthKey = fullMonth[selectedDay.fullDate.getMonth()]
+    const month = this.months.get(`${monthKey}-${this.currentYear}`);
 
-          if(this.startDate && day.fullDate < this.startDate.fullDate){
-            day.selected = true;
-            this.startDate = day;
+    if (!month) return
 
-            this.unselectAll(day.id)
-            return
-          }
+    month.map(day => {
+      if (day.id === selectedDay.id) {
+        if (!this.startDate) {
+          day.selected = true;
+          this.startDate = day;
 
-          if (this.startDate && !this.endDate) {
-            day.selected = true;
-            this.endDate = day;
-            this.verifyRange()
-            return
-          }
-
-          if(this.startDate && this.endDate){
-            day.selected = true;
-            this.startDate = day;
-            this.endDate = undefined;
-
-            this.unselectAll(day.id)
-            return
-          }
+          this.unselectAllDays()
+          this.makeDays()
+          return;
         }
+
+        if (this.startDate && day.fullDate < this.startDate.fullDate) {
+          day.selected = true;
+          this.startDate = day
+          this.endDate = undefined;
+
+          this.unselectAllDays()
+          this.makeDays()
+          return
+        }
+
+        if (this.startDate && !this.endDate) {
+          day.selected = true;
+          this.endDate = day;
+
+          this.unselectAllDays()
+          this.markRange()
+          this.makeDays()
+          return
+        }
+
+        if (this.startDate && this.endDate) {
+          day.selected = true;
+          this.startDate = day;
+          this.endDate = undefined;
+
+          this.unselectAllDays()
+          this.makeDays()
+          return
+        }
+      }
+    })
+  }
+
+  private unselectAllDays() {
+    Array.from(this.months.keys()).map(key => {
+      const month = this.months.get(key)
+
+      if (!month) return
+
+      month.map(day => {
+        if (!day.id) return
+
+        if (this.startDate && this.startDate.id === day.id) return
+
+        if (this.endDate && this.endDate.id === day.id) return
+
+        day.selected = false
+        day.inRange = false
       })
     })
   }
 
-  public verifyRange() {
-    this.days.map((week: IDay[]) => {
-      week.map(day => {
+  private markRange() {
+    if (!this.startDate) return
+    if (!this.endDate) return
+
+    Array.from(this.months.keys()).map(key => {
+      const month = this.months.get(key)
+
+      if (!month) return
+
+      month.map(day => {
+        if (!day.id) return
+
         if (
           this.startDate &&
           this.endDate &&
@@ -87,43 +129,38 @@ export class AppComponent {
     })
   }
 
-  public unselectAll(dayId: string){
-    this.days.map((week: IDay[]) => {
-      week.map(day => {
-        if(day.id === dayId) return
-        day.selected = false;
-        day.inRange = false;
-      })
-    })
-  }
-
-  public previousMonth(){
+  public previousMonth() {
     this.currentMonth--
 
-    if(this.currentMonth < 0){
+    if (this.currentMonth < 0) {
       this.currentMonth = 11
       this.currentYear--
     }
 
-    const newDate = new Date(this.currentYear, this.currentMonth)
 
-    this.makeDays(newDate)
+    this.makeDays()
   }
 
-  public nextMonth(){
+  public nextMonth() {
     this.currentMonth++
 
-    if(this.currentMonth > 11){
+    if (this.currentMonth > 11) {
       this.currentMonth = 0
       this.currentYear++
     }
 
-    const newDate = new Date(this.currentYear, this.currentMonth)
 
-    this.makeDays(newDate)
+    this.makeDays()
   }
 
-  public makeDays(date: Date) {
+  public makeDays() {
+    const existis = this.months.get(this.getMonthKey(this.currentMonth));
+
+    if (existis) {
+      this.days = this.makeDaysMatrix(existis)
+      return
+    }
+
     const lastDayCurrentMonth = this.getLastDayOfMonth(
       this.currentYear,
       this.currentMonth,
@@ -139,9 +176,19 @@ export class AppComponent {
     this.allDays = Array(startWeekdays).fill('')
 
     for (let i = 1; i < (lastDayCurrentMonth.getDate() + 1); i++) {
-      this.allDays.push(i)
+      this.allDays.push({
+        id: this.base64(),
+        day: i,
+        fullDate: new Date(
+          this.currentYear,
+          this.currentMonth,
+          i, 0, 0, 0, 0),
+        inRange: false,
+        selected: false
+      })
     }
 
+    this.months.set(this.getMonthKey(this.currentMonth), this.allDays)
     this.days = this.makeDaysMatrix(this.allDays)
   }
 
@@ -155,16 +202,7 @@ export class AppComponent {
       }
 
       // @ts-ignore
-      matrix[k].push({
-        id: this.base64(),
-        day: list[i],
-        fullDate: new Date(
-          this.currentYear,
-          this.currentMonth,
-          list[i], 0, 0, 0, 0),
-        inRange: false,
-        selected: false
-      });
+      matrix[k].push(list[i]);
     }
 
     return matrix;
@@ -181,25 +219,21 @@ export class AppComponent {
     return result;
   }
 
-  public isEndDate(dayId: string){
-    if(!this.endDate) return false
+  private getMonthKey(month: number){
+    return `${fullMonth[month]}-${this.currentYear}`
+  }
+
+  public isEndDate(dayId: string) {
+    if (!this.endDate) return false
 
     return this.endDate.id === dayId
   }
 
-  public getFullMonth(){
-    // if((this.currentMonth - 1) < 0){
-    //   return fullMonth[0]
-    // }
-
+  public getFullMonth() {
     return fullMonth[this.currentMonth]
   }
 
-  public getSmallMonth(){
-    // if((this.currentMonth) < 0){
-    //   return smallMonth[0]
-    // }
-
+  public getSmallMonth() {
     return smallMonth[this.currentMonth]
   }
 }
@@ -212,7 +246,7 @@ interface IDay {
   selected: boolean;
 }
 
-const fullMonth= [
+const fullMonth = [
   "January",
   "February",
   "March",
