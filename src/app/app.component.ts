@@ -21,8 +21,10 @@ export class AppComponent {
 
   private allDays: any[] = []
 
-  private startDate: IDay | undefined = undefined;
+  public startDate: IDay | undefined = undefined;
   public endDate: IDay | undefined = undefined;
+
+  public countDaysRange: number = 0;
 
   public months = new Map<string, IDay[]>();
 
@@ -36,7 +38,91 @@ export class AppComponent {
     return new Date(year, month, 1);
   }
 
-  private firstSelection = false;
+  preFilter(filter: IPreFilter) {
+    let index;
+    this.startDate = undefined;
+    this.endDate = undefined;
+    this.unselectAllDays()
+
+    switch (filter) {
+
+      case "clear":
+        this.countDaysRange = 0;
+        this.startDate = undefined;
+        this.endDate = undefined;
+        this.unselectAllDays()
+        return
+      case "this-year":
+        const tempMonth = this.currentMonth
+
+        const firstMonth = this.months.get(`${fullMonth[0]}-${this.currentYear}`)
+
+        if (!firstMonth) return
+
+        index = firstMonth.findIndex(day => day.id)
+
+        firstMonth[index].selected = true
+
+        this.startDate = firstMonth[index]
+
+        this.currentMonth = 11
+        this.makeDays()
+
+        const lastMonth = this.months.get(`${fullMonth[11]}-${this.currentYear}`)
+
+        if (!lastMonth) return
+
+        lastMonth[lastMonth.length - 1].selected = true
+
+        this.endDate = lastMonth[lastMonth.length - 1]
+
+
+        this.currentMonth = tempMonth
+
+        this.markRange()
+        this.makeDays()
+        return
+      case "this-week":
+        const firstDayWeek = this.date.getDate() - this.date.getDay()
+        const lastDayWeek = firstDayWeek + 6
+
+        const thisWeekMonth = this.months.get(`${fullMonth[this.currentMonth]}-${this.currentYear}`)
+
+        if(!thisWeekMonth) return
+
+        index = thisWeekMonth.findIndex(day => day.day === String(firstDayWeek))
+
+        thisWeekMonth[index].selected = true
+
+        this.startDate = thisWeekMonth[index]
+
+        index = thisWeekMonth.findIndex(day => day.day === String(lastDayWeek))
+
+        thisWeekMonth[index].selected = true
+
+        this.endDate = thisWeekMonth[index]
+
+        this.markRange()
+        return
+      case "this-month":
+        const month = this.months.get(`${fullMonth[this.currentMonth]}-${this.currentYear}`)
+
+        if(!month) return
+
+        index = month.findIndex(day => day.day)
+
+        month[index].selected = true
+
+        this.startDate = month[index]
+
+        month[month.length - 1].selected = true
+
+        this.endDate = month[month.length - 1]
+
+        this.markRange()
+        return
+    }
+  }
 
   public selectDay(selectedDay: IDay) {
     const monthKey = fullMonth[selectedDay.fullDate.getMonth()]
@@ -46,6 +132,8 @@ export class AppComponent {
 
     month.map(day => {
       if (day.id === selectedDay.id) {
+        this.countDaysRange = 1;
+
         if (!this.startDate) {
           day.selected = true;
           this.startDate = day;
@@ -86,6 +174,8 @@ export class AppComponent {
         }
       }
     })
+
+
   }
 
   private unselectAllDays() {
@@ -97,9 +187,13 @@ export class AppComponent {
       month.map(day => {
         if (!day.id) return
 
-        if (this.startDate && this.startDate.id === day.id) return
+        if (this.startDate && this.startDate.id === day.id) {
+          return
+        }
 
-        if (this.endDate && this.endDate.id === day.id) return
+        if (this.endDate && this.endDate.id === day.id) {
+          return
+        }
 
         day.selected = false
         day.inRange = false
@@ -110,6 +204,8 @@ export class AppComponent {
   private markRange() {
     if (!this.startDate) return
     if (!this.endDate) return
+
+    this.countDaysRange = 2;
 
     Array.from(this.months.keys()).map(key => {
       const month = this.months.get(key)
@@ -124,7 +220,10 @@ export class AppComponent {
           this.endDate &&
           this.startDate.fullDate < day.fullDate &&
           this.endDate.fullDate > day.fullDate
-        ) day.inRange = true
+        ) {
+          day.inRange = true
+          this.countDaysRange++
+        }
       })
     })
   }
@@ -137,8 +236,8 @@ export class AppComponent {
       this.currentYear--
     }
 
-
     this.makeDays()
+    this.markRange()
   }
 
   public nextMonth() {
@@ -149,8 +248,8 @@ export class AppComponent {
       this.currentYear++
     }
 
-
     this.makeDays()
+    this.markRange()
   }
 
   public makeDays() {
@@ -178,7 +277,7 @@ export class AppComponent {
     for (let i = 1; i < (lastDayCurrentMonth.getDate() + 1); i++) {
       this.allDays.push({
         id: this.base64(),
-        day: i,
+        day: `${i}`,
         fullDate: new Date(
           this.currentYear,
           this.currentMonth,
@@ -219,7 +318,7 @@ export class AppComponent {
     return result;
   }
 
-  private getMonthKey(month: number){
+  private getMonthKey(month: number) {
     return `${fullMonth[month]}-${this.currentYear}`
   }
 
@@ -274,3 +373,11 @@ const smallMonth = [
   "Oct",
   "Nov",
   "Dec"]
+
+type IPreFilter =
+  'last-week' |
+  'this-week' |
+  'this-month' |
+  'last-90-days' |
+  'this-year' |
+  'clear'

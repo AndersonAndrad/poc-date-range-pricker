@@ -1,49 +1,71 @@
 <div class="container">
-  <div class="header">
-    <div>{{getFullMonth()}} - {{currentYear}}</div>
-    <div class="buttons">
-      <button (click)="previousMonth()">
+  <header>
+    <div class="selected-days">
+      <label>{{this.startDate?.fullDate | date}} - </label>
+      <label>{{this.endDate?.fullDate | date}}</label>
+    </div>
+    <div class="selected-months">
+      <div>{{getFullMonth()}} - {{currentYear}}</div>
+      <div class="buttons">
+        <button (click)="previousMonth()">
         <span class="material-symbols-outlined">
           chevron_left
         </span>
-      </button>
-      <button (click)="nextMonth()">
+        </button>
+        <button (click)="nextMonth()">
         <span class="material-symbols-outlined">
           chevron_right
         </span>
-      </button>
+        </button>
+      </div>
     </div>
-  </div>
-  <table>
-    <thead>
-    <th>s</th>
-    <th>m</th>
-    <th>t</th>
-    <th>w</th>
-    <th>t</th>
-    <th>f</th>
-    <th>s</th>
-    </thead>
-    <tbody>
-    <tr *ngFor="let week of days">
-      <td *ngFor="let day of week">
-        <button
-          *ngIf="day"
-          class="day"
-          [ngClass]="{selected: day.selected, endDate: isEndDate(day.id), inRange: day.inRange}"
-          (click)="selectDay(day)"
-        >
-          <spand
-            class="span"
-            *ngIf="day.day"
-            [ngClass]="{
+  </header>
+  <main>
+    <div class="options">
+      <ul>
+        <li (click)="preFilter('this-week')">This week</li>
+        <li (click)="preFilter('this-month')">This month </li>
+        <li (click)="preFilter('this-year')">This year</li>
+        <li (click)="preFilter('clear')">Clear</li>
+      </ul>
+    </div>
+    <div class="calendar">
+      <table>
+        <thead>
+        <th>s</th>
+        <th>m</th>
+        <th>t</th>
+        <th>w</th>
+        <th>t</th>
+        <th>f</th>
+        <th>s</th>
+        </thead>
+        <tbody>
+        <tr *ngFor="let week of days">
+          <td *ngFor="let day of week">
+            <button
+              *ngIf="day"
+              class="day"
+              [ngClass]="{selected: day.selected, endDate: isEndDate(day.id), inRange: day.inRange}"
+              (click)="selectDay(day)"
+            >
+              <spand
+                class="span"
+                *ngIf="day.day"
+                [ngClass]="{
             inRange: day.inRange,
             selected: day.selected}">
-            {{day.day}}
-          </spand>
-        </button>
-      </td>
-    </tr>
-    </tbody>
-  </table>
+                {{day.day}}
+              </spand>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <footer>
+    <button>Cancel</button>
+    <button>Apply</button>
+  </footer>
 </div>
