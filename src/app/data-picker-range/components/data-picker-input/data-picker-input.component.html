@@ -1,0 +1,12 @@
+<div class="container" (click)="onOpen()">
+  <label *ngIf="formControl.value">{{formControl.value?.startDate | date}} - {{formControl.value?.endDate | date}}</label>
+  <label *ngIf="!formControl.value">Select range date</label>
+</div>
+<data-picker-range
+  *ngIf="opened"
+  (onCloseEmitter)="onOpen()"
+  [control]="formControl"
+>
+
+</data-picker-range>
+
