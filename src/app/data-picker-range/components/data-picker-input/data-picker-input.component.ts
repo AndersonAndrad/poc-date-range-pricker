@@ -1,16 +1,16 @@
-import {Component} from "@angular/core";
-import {FormControl} from "@angular/forms";
+import { Component } from '@angular/core';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'data-picker',
   templateUrl: './data-picker-input.component.html',
-  styleUrls: ['./data-picker-input.component.scss']
+  styleUrls: ['./data-picker-input.component.scss'],
 })
 export class DataPickerInputComponent {
-  public formControl = new FormControl()
-  public opened: boolean = false;
+  public formControl = new FormControl();
+  public opened: boolean = true;
 
-  public onOpen(){
-    this.opened = !this.opened
+  public onOpen() {
+    this.opened = !this.opened;
   }
 }
