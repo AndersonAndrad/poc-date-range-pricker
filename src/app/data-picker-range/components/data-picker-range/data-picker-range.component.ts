@@ -8,7 +8,7 @@ import { FormControl } from '@angular/forms';
   styleUrls: ['./data-picker-range.component.scss'],
 })
 export class DataPickerRangeComponent {
-  @Input() control!: FormControl;
+  @Input() control: FormControl = new FormControl();
 
   @Output() onCloseEmitter = new EventEmitter<boolean>();
 
@@ -22,13 +22,11 @@ export class DataPickerRangeComponent {
 
   countDaysRange: number = 0;
 
-  months = new Map<string, IDay[]>();
+  MapMonths = new Map<string, IDay[]>();
 
   days: IDay[][] = [];
 
   private readonly weekday = [0, 1, 2, 3, 4, 5, 6];
-
-  private allDays: IDay[] = [];
 
   private date = new Date();
 
@@ -37,42 +35,103 @@ export class DataPickerRangeComponent {
 
     this.currentMonth = this.date.getMonth();
 
+    this.patchValues();
+
     this.loadDays();
   }
 
   /* Loaders */
   loadDays() {
-    const month = this.months.get(this.getMonthKey(this.currentMonth));
+    const month = this.MapMonths.get(
+      this.getMonthKey(this.currentMonth, this.currentYear)
+    );
 
     if (month) {
       this.days = this.createMatrixDays(month);
       return;
     }
 
-    const lastDay = this.getLastDayOfMonth(this.currentYear, this.currentMonth);
+    const allDays = this.laodMonth(this.currentMonth, this.currentYear);
 
-    const firstDay = this.getFirstDayOfMonth(
-      this.currentYear,
-      this.currentMonth
-    );
+    this.days = this.createMatrixDays(allDays);
+  }
 
-    const firstWeekDay = this.weekday[firstDay.getDay()];
+  private laodMonth(month: number, year: number): IDay[] {
+    const registredMonth = this.MapMonths.get(this.getMonthKey(month, year));
 
-    this.allDays = Array(firstWeekDay).fill('');
+    if (registredMonth) return registredMonth;
+
+    const firstDay: Date = this.getFirstDayOfMonth(year, month);
+
+    const lastDay: Date = this.getLastDayOfMonth(year, month);
+
+    const firstWeekDay: number = this.weekday[firstDay.getDay()];
+
+    const allDays: IDay[] = Array(firstWeekDay).fill('');
 
     for (let i = 1; i < lastDay.getDate() + 1; i++) {
-      this.allDays.push({
+      allDays.push({
         id: this.base64(),
         day: String(i),
-        fullDate: new Date(this.currentYear, this.currentMonth, i, 0, 0, 0, 0),
+        fullDate: new Date(year, month, i, 0, 0, 0, 0),
         inRange: false,
         selected: false,
       });
     }
 
-    this.months.set(this.getMonthKey(this.currentMonth), this.allDays);
+    this.MapMonths.set(this.getMonthKey(month, year), allDays);
 
-    this.days = this.createMatrixDays(this.allDays);
+    return allDays;
+  }
+
+  private patchValues() {
+    const dates = this.control.value;
+
+    if (!dates || !dates['startDate'] || !dates['endDate']) return;
+
+    let newDate = new Date(dates['startDate']);
+
+    let day = newDate.getDate();
+    let month = newDate.getMonth();
+    let year = newDate.getFullYear();
+
+    this.laodMonth(month, year);
+
+    let key = this.getMonthKey(month, year);
+    let createdMonth = this.MapMonths.get(key);
+
+    if (!createdMonth) return;
+    createdMonth.map((item) => {
+      if (item.day === String(day)) {
+        item.selected = true;
+        this.startDate = item;
+
+        this.currentMonth = month;
+        this.currentYear = year;
+      }
+    });
+
+    newDate = new Date(dates['endDate']);
+
+    day = newDate.getDate();
+    month = newDate.getMonth();
+    year = newDate.getFullYear();
+
+    this.laodMonth(month, year);
+
+    key = this.getMonthKey(month, year);
+    createdMonth = this.MapMonths.get(key);
+
+    if (!createdMonth) return;
+    createdMonth.map((item) => {
+      if (item.day === String(day)) {
+        if (this.startDate!.fullDate > item.fullDate) return;
+        item.selected = true;
+        this.endDate = item;
+      }
+    });
+
+    this.highlightRange();
   }
 
   /* Helpers */
@@ -138,8 +197,12 @@ export class DataPickerRangeComponent {
    * @returns void
    */
   selectDay(selectedDay: IDay): void {
-    const monthKey = fullMonth[selectedDay.fullDate.getMonth()];
-    const month = this.months.get(`${monthKey}-${this.currentYear}`);
+    const key = this.getMonthKey(
+      selectedDay.fullDate.getMonth(),
+      this.currentYear
+    );
+
+    const month = this.MapMonths.get(key);
 
     if (!month) return;
 
@@ -197,8 +260,8 @@ export class DataPickerRangeComponent {
    * Remove hightlight range
    */
   private removeHightlight(): void {
-    Array.from(this.months.keys()).map((key) => {
-      const month = this.months.get(key);
+    Array.from(this.MapMonths.keys()).map((key) => {
+      const month = this.MapMonths.get(key);
 
       if (!month) return;
 
@@ -228,8 +291,8 @@ export class DataPickerRangeComponent {
 
     this.countDaysRange = 2;
 
-    Array.from(this.months.keys()).map((key) => {
-      const month = this.months.get(key);
+    Array.from(this.MapMonths.keys()).map((key) => {
+      const month = this.MapMonths.get(key);
 
       if (!month) return;
 
@@ -313,8 +376,8 @@ export class DataPickerRangeComponent {
    * @param month - number
    * @returns string
    */
-  private getMonthKey(month: number): string {
-    return `${fullMonth[month]}-${this.currentYear}`;
+  private getMonthKey(month: number, year: number): string {
+    return `${fullMonth[month]}-${year}`;
   }
 
   /**
@@ -351,7 +414,9 @@ export class DataPickerRangeComponent {
 
     const tempMonth = this.currentMonth;
 
-    const firstMonth = this.months.get(`${fullMonth[0]}-${this.currentYear}`);
+    const firstMonth = this.MapMonths.get(
+      `${fullMonth[0]}-${this.currentYear}`
+    );
 
     if (!firstMonth) return;
 
@@ -364,7 +429,9 @@ export class DataPickerRangeComponent {
     this.currentMonth = 11;
     this.loadDays();
 
-    const lastMonth = this.months.get(`${fullMonth[11]}-${this.currentYear}`);
+    const lastMonth = this.MapMonths.get(
+      `${fullMonth[11]}-${this.currentYear}`
+    );
 
     if (!lastMonth) return;
 
@@ -387,7 +454,7 @@ export class DataPickerRangeComponent {
     const firstWeekday = this.date.getDate() - this.date.getDay();
     const lastWeekDay = firstWeekday + 6;
 
-    const month = this.months.get(
+    const month = this.MapMonths.get(
       `${fullMonth[this.currentMonth]}-${this.currentYear}`
     );
 
@@ -414,7 +481,7 @@ export class DataPickerRangeComponent {
   private runMacroThisMonth(): void {
     let index: number;
 
-    const month = this.months.get(
+    const month = this.MapMonths.get(
       `${fullMonth[this.currentMonth]}-${this.currentYear}`
     );
 
