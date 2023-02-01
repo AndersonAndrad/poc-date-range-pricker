@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 import { FormControl } from '@angular/forms';
 
@@ -7,8 +7,8 @@ import { FormControl } from '@angular/forms';
   templateUrl: './data-picker-range.component.html',
   styleUrls: ['./data-picker-range.component.scss'],
 })
-export class DataPickerRangeComponent {
-  @Input() control: FormControl = new FormControl();
+export class DataPickerRangeComponent implements OnInit {
+  @Input() control!: FormControl;
 
   @Output() onCloseEmitter = new EventEmitter<boolean>();
 
@@ -34,7 +34,9 @@ export class DataPickerRangeComponent {
     this.currentYear = this.date.getFullYear();
 
     this.currentMonth = this.date.getMonth();
+  }
 
+  ngOnInit(): void {
     this.patchValues();
 
     this.loadDays();
