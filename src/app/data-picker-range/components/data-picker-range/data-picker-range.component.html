@@ -1,7 +1,8 @@
 <div class="container">
   <header>
     <div class="selected-days">
-      <label>{{ this.startDate?.fullDate | date }} - </label>
+      <label>{{ this.startDate?.fullDate | date }}</label>
+      <label *ngIf="this.startDate && this.endDate">-</label>
       <label>{{ this.endDate?.fullDate | date }}</label>
     </div>
     <div class="selected-months">
@@ -19,10 +20,12 @@
   <main>
     <div class="options">
       <ul>
-        <li (click)="onMacro('today')">Today</li>
         <li (click)="onMacro('this-week')">This week</li>
         <li (click)="onMacro('this-month')">This month</li>
         <li (click)="onMacro('this-year')">This year</li>
+        <li (click)="onMacro('last-15-days')">Last fiteen days</li>
+        <li (click)="onMacro('last-30-days')">Last thirty days</li>
+        <li (click)="onMacro('last-90-days')">Last ninety days</li>
         <li (click)="onMacro('clear')">Clear</li>
       </ul>
     </div>

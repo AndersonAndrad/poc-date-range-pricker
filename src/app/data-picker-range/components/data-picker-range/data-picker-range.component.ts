@@ -28,12 +28,12 @@ export class DataPickerRangeComponent implements OnInit {
 
   private readonly weekday = [0, 1, 2, 3, 4, 5, 6];
 
-  private date = new Date();
+  private currentDay = new Date();
 
   constructor() {
-    this.currentYear = this.date.getFullYear();
+    this.currentYear = this.currentDay.getFullYear();
 
-    this.currentMonth = this.date.getMonth();
+    this.currentMonth = this.currentDay.getMonth();
   }
 
   ngOnInit(): void {
@@ -168,6 +168,15 @@ export class DataPickerRangeComponent implements OnInit {
         return;
       case 'this-month':
         this.runMacroThisMonth();
+        return;
+      case 'last-15-days':
+        this.runMacroLastFifteenDays();
+        return;
+      case 'last-30-days':
+        this.runMacroLastThirtyDays();
+        return;
+      case 'last-90-days':
+        this.runMacroLastNinetyDays();
         return;
     }
   }
@@ -412,67 +421,55 @@ export class DataPickerRangeComponent implements OnInit {
    * Macro to hightlight all year
    */
   private runMacroThisYear(): void {
-    let index: number;
+    const firstMonth = this.laodMonth(0, this.currentYear);
+    const lastMonth = this.laodMonth(11, this.currentYear);
 
-    const tempMonth = this.currentMonth;
+    const firstYearDay = firstMonth[0];
+    const lastYearDay = lastMonth[lastMonth.length - 1];
 
-    const firstMonth = this.MapMonths.get(
-      `${fullMonth[0]}-${this.currentYear}`
-    );
+    firstYearDay.selected = true;
+    lastYearDay.selected = true;
 
-    if (!firstMonth) return;
-
-    index = firstMonth.findIndex((day) => day.id);
-
-    firstMonth[index].selected = true;
-
-    this.startDate = firstMonth[index];
-
-    this.currentMonth = 11;
-    this.loadDays();
-
-    const lastMonth = this.MapMonths.get(
-      `${fullMonth[11]}-${this.currentYear}`
-    );
-
-    if (!lastMonth) return;
-
-    lastMonth[lastMonth.length - 1].selected = true;
-
-    this.endDate = lastMonth[lastMonth.length - 1];
-
-    this.currentMonth = tempMonth;
+    this.startDate = firstYearDay;
+    this.endDate = lastYearDay;
 
     this.highlightRange();
-    this.loadDays();
   }
 
   /**
    * Macro to hightlight the week
    */
   private runMacroThisWeek(): void {
-    let index: number;
-
-    const firstWeekday = this.date.getDate() - this.date.getDay();
+    const firstWeekday = this.currentDay.getDate() - this.currentDay.getDay();
     const lastWeekDay = firstWeekday + 6;
 
-    const month = this.MapMonths.get(
+    const days = this.MapMonths.get(
       `${fullMonth[this.currentMonth]}-${this.currentYear}`
     );
 
-    if (!month) return;
+    if (!days) return;
 
-    index = month.findIndex(({ day }) => day === String(firstWeekday));
+    days.map((day) => {
+      if (day.day === String(firstWeekday)) {
+        day.selected = true;
 
-    month[index].selected = true;
+        this.startDate = day;
+      }
 
-    this.startDate = month[index];
+      if (this.startDate && day.day === String(lastWeekDay)) {
+        day.selected = true;
 
-    index = month.findIndex(({ day }) => day === String(lastWeekDay));
+        this.endDate = day;
+      }
+    });
 
-    month[index].selected = true;
+    if (lastWeekDay > 31 || lastWeekDay > 30) {
+      const day = days[days.length - 1];
 
-    this.endDate = month[index];
+      day.selected = true;
+
+      this.endDate = day;
+    }
 
     this.highlightRange();
   }
@@ -498,6 +495,185 @@ export class DataPickerRangeComponent implements OnInit {
     month[month.length - 1].selected = true;
 
     this.endDate = month[month.length - 1];
+
+    this.highlightRange();
+  }
+
+  /**
+   * Macro to hightlight the last thirty days
+   */
+  private runMacroLastThirtyDays(): void {
+    let month = this.currentMonth;
+    let year = this.currentYear;
+
+    const key: string = this.getMonthKey(month, year);
+
+    const days = this.MapMonths.get(key);
+
+    if (!days) return;
+
+    days.map((day) => {
+      if (day.day !== String(this.currentDay.getDate())) return;
+
+      day.selected = true;
+
+      this.endDate = day;
+    });
+
+    if (!this.endDate) return;
+
+    let currentDay: number = Number(this.endDate.day) - 30;
+
+    if (currentDay < 0) {
+      month = month - 1;
+
+      if (month < 0) {
+        year = year - 1;
+        month = 11;
+      }
+
+      currentDay = Math.abs(currentDay);
+
+      currentDay = currentDay - 30;
+
+      currentDay = Math.abs(currentDay);
+
+      this.laodMonth(month, year);
+
+      const key = this.getMonthKey(month, year);
+
+      const days = this.MapMonths.get(key);
+
+      if (!days) return;
+
+      days.map((day) => {
+        if (day.day !== String(currentDay)) return;
+
+        day.selected = true;
+
+        this.startDate = day;
+      });
+    }
+
+    this.highlightRange();
+  }
+
+  /**
+   * Macro to hightlight the last fifteen days
+   */
+  private runMacroLastFifteenDays(): void {
+    let month = this.currentMonth;
+    let year = this.currentYear;
+
+    let key: string = this.getMonthKey(month, year);
+
+    let days = this.MapMonths.get(key);
+
+    if (!days) return;
+
+    days.map((day) => {
+      if (day.day !== String(this.currentDay.getDate())) return;
+
+      day.selected = true;
+
+      this.endDate = day;
+    });
+
+    if (!this.endDate) return;
+
+    let currentDay: number = Number(this.endDate.day) - 15;
+
+    if (currentDay < 0) {
+      month = month - 1;
+
+      if (month < 0) {
+        year = year - 1;
+        month = 11;
+      }
+    }
+
+    this.laodMonth(month, year);
+
+    key = this.getMonthKey(month, year);
+
+    days = this.MapMonths.get(key);
+
+    if (!days) return;
+
+    const lastDay = days[days.length - 1];
+
+    currentDay = Math.abs(currentDay);
+
+    currentDay = currentDay - Number(lastDay.day) - 1;
+
+    currentDay = Math.abs(currentDay);
+
+    days.map((day) => {
+      if (day.day !== String(currentDay)) return;
+
+      day.selected = true;
+
+      this.startDate = day;
+    });
+
+    this.highlightRange();
+  }
+
+  /**
+   * Macro to hightlight the last ninety days
+   */
+  private runMacroLastNinetyDays(): void {
+    let month = this.currentMonth;
+    let year = this.currentYear;
+
+    const key: string = this.getMonthKey(month, year);
+
+    const days = this.MapMonths.get(key);
+
+    if (!days) return;
+
+    days.map((day) => {
+      if (day.day !== String(this.currentDay.getDate())) return;
+
+      day.selected = true;
+
+      this.endDate = day;
+    });
+
+    if (!this.endDate) return;
+
+    let currentDay: number = Number(this.endDate.day) - 90;
+
+    if (currentDay < 0) {
+      month = month - 2;
+
+      if (month < 0) {
+        year = year - 1;
+        month = 11;
+      }
+
+      currentDay = Math.abs(currentDay);
+
+      currentDay = currentDay - 90;
+
+      currentDay = Math.abs(currentDay);
+
+      this.laodMonth(month, year);
+
+      const key = this.getMonthKey(month, year);
+
+      const days = this.MapMonths.get(key);
+
+      if (!days) return;
+
+      days.map((day) => {
+        if (day.day !== String(currentDay)) return;
+
+        day.selected = true;
+
+        this.startDate = day;
+      });
+    }
 
     this.highlightRange();
   }
@@ -531,6 +707,8 @@ type IMacro =
   | 'this-week'
   | 'this-month'
   | 'last-90-days'
+  | 'last-30-days'
+  | 'last-15-days'
   | 'this-year'
   | 'clear'
   | 'today';
