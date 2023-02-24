@@ -581,7 +581,7 @@ export class DataPickerRangeComponent implements OnInit {
 
     if (!this.endDate) return;
 
-    let currentDay: number = Number(this.endDate.day) - 15;
+    let currentDay: number = Number(this.endDate.day) - 14;
 
     if (currentDay < 0) {
       month = month - 1;
@@ -592,21 +592,23 @@ export class DataPickerRangeComponent implements OnInit {
       }
     }
 
-    this.laodMonth(month, year);
+    if (this.currentMonth !== month) {
+      this.laodMonth(month, year);
 
-    key = this.getMonthKey(month, year);
+      key = this.getMonthKey(month, year);
 
-    days = this.MapMonths.get(key);
+      days = this.MapMonths.get(key);
 
-    if (!days) return;
+      if (!days) return;
 
-    const lastDay = days[days.length - 1];
+      const lastDay = days[days.length - 1];
 
-    currentDay = Math.abs(currentDay);
+      currentDay = Math.abs(currentDay);
 
-    currentDay = currentDay - Number(lastDay.day) - 1;
+      currentDay = currentDay - Number(lastDay.day) - 1;
 
-    currentDay = Math.abs(currentDay);
+      currentDay = Math.abs(currentDay);
+    }
 
     days.map((day) => {
       if (day.day !== String(currentDay)) return;
