@@ -506,9 +506,9 @@ export class DataPickerRangeComponent implements OnInit {
     let month = this.currentMonth;
     let year = this.currentYear;
 
-    const key: string = this.getMonthKey(month, year);
+    let key: string = this.getMonthKey(month, year);
 
-    const days = this.MapMonths.get(key);
+    let days = this.MapMonths.get(key);
 
     if (!days) return;
 
@@ -522,7 +522,7 @@ export class DataPickerRangeComponent implements OnInit {
 
     if (!this.endDate) return;
 
-    let currentDay: number = Number(this.endDate.day) - 30;
+    let currentDay: number = Number(this.endDate.day) - 14;
 
     if (currentDay < 0) {
       month = month - 1;
@@ -531,29 +531,33 @@ export class DataPickerRangeComponent implements OnInit {
         year = year - 1;
         month = 11;
       }
+    }
 
-      currentDay = Math.abs(currentDay);
-
-      currentDay = currentDay - 30;
-
-      currentDay = Math.abs(currentDay);
-
+    if (this.currentMonth !== month) {
       this.laodMonth(month, year);
 
-      const key = this.getMonthKey(month, year);
+      key = this.getMonthKey(month, year);
 
-      const days = this.MapMonths.get(key);
+      days = this.MapMonths.get(key);
 
       if (!days) return;
 
-      days.map((day) => {
-        if (day.day !== String(currentDay)) return;
+      const lastDay = days[days.length - 1];
 
-        day.selected = true;
+      currentDay = Math.abs(currentDay);
 
-        this.startDate = day;
-      });
+      currentDay = currentDay - Number(lastDay.day) - 1;
+
+      currentDay = Math.abs(currentDay);
     }
+
+    days.map((day) => {
+      if (day.day !== String(currentDay)) return;
+
+      day.selected = true;
+
+      this.startDate = day;
+    });
 
     this.highlightRange();
   }
