@@ -626,9 +626,9 @@ export class DataPickerRangeComponent implements OnInit {
     let month = this.currentMonth;
     let year = this.currentYear;
 
-    const key: string = this.getMonthKey(month, year);
+    let key: string = this.getMonthKey(month, year);
 
-    const days = this.MapMonths.get(key);
+    let days = this.MapMonths.get(key);
 
     if (!days) return;
 
@@ -642,38 +642,69 @@ export class DataPickerRangeComponent implements OnInit {
 
     if (!this.endDate) return;
 
-    let currentDay: number = Number(this.endDate.day) - 90;
+    let currentDay: number = Number(this.endDate.day) - 89;
 
     if (currentDay < 0) {
-      month = month - 2;
+      month = month - 1;
 
       if (month < 0) {
         year = year - 1;
-        month = 11;
+        month = Math.abs(month) - 11;
       }
 
-      currentDay = Math.abs(currentDay);
-
-      currentDay = currentDay - 90;
-
-      currentDay = Math.abs(currentDay);
-
-      this.laodMonth(month, year);
-
-      const key = this.getMonthKey(month, year);
-
-      const days = this.MapMonths.get(key);
-
-      if (!days) return;
-
-      days.map((day) => {
-        if (day.day !== String(currentDay)) return;
-
-        day.selected = true;
-
-        this.startDate = day;
-      });
+      month = Math.abs(month);
     }
+
+    this.laodMonth(month, year);
+
+    key = this.getMonthKey(month, year);
+
+    days = this.MapMonths.get(key);
+
+    if (!days) return;
+
+    let lastDay = days[days.length - 1];
+
+    currentDay = Math.abs(currentDay);
+
+    currentDay = Number(lastDay.day) - currentDay;
+
+    if (currentDay < 0) {
+      month = month - 1;
+
+      if (month < 0) {
+        year = year - 1;
+        month = Math.abs(month) - 11;
+      }
+
+      month = Math.abs(month);
+    }
+
+    this.laodMonth(month, year);
+
+    key = this.getMonthKey(month, year);
+
+    days = this.MapMonths.get(key);
+
+    if (!days) return;
+
+    lastDay = days[days.length - 1];
+
+    currentDay = Math.abs(currentDay);
+
+    currentDay = currentDay - Number(lastDay.day);
+
+    currentDay = currentDay - Number(lastDay.day) - 1;
+
+    currentDay = Math.abs(currentDay);
+
+    days.map((day) => {
+      if (day.day !== String(currentDay)) return;
+
+      day.selected = true;
+
+      this.startDate = day;
+    });
 
     this.highlightRange();
   }
