@@ -1,6 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 
-import { FormControl } from '@angular/forms';
+import {FormControl} from '@angular/forms';
+import {DateHelper} from "../../../helpers/date.helper";
+import {PickerHelper} from "../../../helpers/picker.helper";
+import {MacroEnum} from "../../../interfaces/picker.interface";
 
 @Component({
   selector: 'data-picker-range',
@@ -8,9 +11,13 @@ import { FormControl } from '@angular/forms';
   styleUrls: ['./data-picker-range.component.scss'],
 })
 export class DataPickerRangeComponent implements OnInit {
-  @Input() control!: FormControl;
+  @Input()
+  control!: FormControl;
 
-  @Output() onCloseEmitter = new EventEmitter<boolean>();
+  @Output()
+  onCloseEmitter = new EventEmitter<boolean>();
+
+  protected readonly MacroEnum = MacroEnum;
 
   currentYear: number;
 
@@ -22,13 +29,11 @@ export class DataPickerRangeComponent implements OnInit {
 
   countDaysRange: number = 0;
 
-  MapMonths = new Map<string, IDay[]>();
+  mapMonths = new Map<string, IDay[]>();
 
   days: IDay[][] = [];
 
-  private readonly weekday = [0, 1, 2, 3, 4, 5, 6];
-
-  private currentDay = new Date();
+  private currentDay = new Date('Mon Apr 01 2023 19:15:57 GMT-0300 (Brasilia Standard Time)');
 
   constructor() {
     this.currentYear = this.currentDay.getFullYear();
@@ -44,44 +49,43 @@ export class DataPickerRangeComponent implements OnInit {
 
   /* Loaders */
   loadDays() {
-    const month = this.MapMonths.get(
-      this.getMonthKey(this.currentMonth, this.currentYear)
+    this.removeHighlightSelected();
+    this.highlightRange();
+
+    const days = this.mapMonths.get(
+      PickerHelper.makeMonthKey(this.currentMonth, this.currentYear)
     );
 
-    if (month) {
-      this.days = this.createMatrixDays(month);
+    if (days) {
+      this.days = PickerHelper.createMatrixDays(days);
       return;
     }
 
-    const allDays = this.laodMonth(this.currentMonth, this.currentYear);
+    const allDays = this.loadMonth(this.currentMonth, this.currentYear);
 
-    this.days = this.createMatrixDays(allDays);
+    this.days = PickerHelper.createMatrixDays(allDays);
   }
 
-  private laodMonth(month: number, year: number): IDay[] {
-    const registredMonth = this.MapMonths.get(this.getMonthKey(month, year));
+  private loadMonth(month: number, year: number): IDay[] {
+    const monthKey = PickerHelper.makeMonthKey(month, year);
 
-    if (registredMonth) return registredMonth;
+    const registeredMonth = this.mapMonths.get(monthKey);
 
-    const firstDay: Date = this.getFirstDayOfMonth(year, month);
+    if (registeredMonth) return registeredMonth;
 
-    const lastDay: Date = this.getLastDayOfMonth(year, month);
+    const firstDay: Date = DateHelper.getFirstDayOfMonth(year, month);
 
-    const firstWeekDay: number = this.weekday[firstDay.getDay()];
+    const lastDay: Date = DateHelper.getLastDayOfMonth(year, month);
+
+    const firstWeekDay: number = firstDay.getDay();
 
     const allDays: IDay[] = Array(firstWeekDay).fill('');
 
-    for (let i = 1; i < lastDay.getDate() + 1; i++) {
-      allDays.push({
-        id: this.base64(),
-        day: String(i),
-        fullDate: new Date(year, month, i, 0, 0, 0, 0),
-        inRange: false,
-        selected: false,
-      });
+    for (let currentDay = 1; currentDay < lastDay.getDate() + 1; currentDay++) {
+      allDays.push(PickerHelper.makeDay(currentDay, month, year));
     }
 
-    this.MapMonths.set(this.getMonthKey(month, year), allDays);
+    this.mapMonths.set(monthKey, allDays);
 
     return allDays;
   }
@@ -97,10 +101,10 @@ export class DataPickerRangeComponent implements OnInit {
     let month = newDate.getMonth();
     let year = newDate.getFullYear();
 
-    this.laodMonth(month, year);
+    this.loadMonth(month, year);
 
-    let key = this.getMonthKey(month, year);
-    let createdMonth = this.MapMonths.get(key);
+    let monthKey = PickerHelper.makeMonthKey(month, year);
+    let createdMonth = this.mapMonths.get(monthKey);
 
     if (!createdMonth) return;
     createdMonth.map((item) => {
@@ -119,10 +123,10 @@ export class DataPickerRangeComponent implements OnInit {
     month = newDate.getMonth();
     year = newDate.getFullYear();
 
-    this.laodMonth(month, year);
+    this.loadMonth(month, year);
 
-    key = this.getMonthKey(month, year);
-    createdMonth = this.MapMonths.get(key);
+    monthKey = PickerHelper.makeMonthKey(month, year);
+    createdMonth = this.mapMonths.get(monthKey);
 
     if (!createdMonth) return;
     createdMonth.map((item) => {
@@ -138,45 +142,38 @@ export class DataPickerRangeComponent implements OnInit {
 
   /* Helpers */
 
-  private getLastDayOfMonth(year: number, month: number) {
-    return new Date(year, month + 1, 0);
-  }
-
-  private getFirstDayOfMonth(year: number, month: number) {
-    return new Date(year, month, 1);
-  }
 
   /**
    * Run requested macro
    * @param macro IMacro
    */
-  onMacro(macro: IMacro): void {
+  runMacro(macro: MacroEnum): void {
     this.startDate = undefined;
     this.endDate = undefined;
 
-    this.removeHightlight();
+    this.removeHighlightRange();
 
     switch (macro) {
-      case 'clear':
-        this.runMacroClear();
+      case MacroEnum.CLEAR:
+        this.macroClear();
         return;
-      case 'this-year':
-        this.runMacroThisYear();
+      case MacroEnum.THIS_YEAR:
+        this.macroThisYear();
         return;
-      case 'this-week':
-        this.runMacroThisWeek();
+      case MacroEnum.THIS_WEEK:
+        this.macroThisWeek();
         return;
-      case 'this-month':
-        this.runMacroThisMonth();
+      case MacroEnum.THIS_MONTH:
+        this.macroThisMonth();
         return;
-      case 'last-15-days':
-        this.runMacroLastFifteenDays();
+      case MacroEnum.LAST_15_DAYS:
+        this.macroLastFifteenDays();
         return;
-      case 'last-30-days':
-        this.runMacroLastThirtyDays();
+      case MacroEnum.LAST_30_DAYS:
+        this.macroLastThirtyDays();
         return;
-      case 'last-90-days':
-        this.runMacroLastNinetyDays();
+      case MacroEnum.LAST_90_DAYS:
+        this.macroLastNinetyDays();
         return;
     }
   }
@@ -197,6 +194,14 @@ export class DataPickerRangeComponent implements OnInit {
     this.onClose();
   }
 
+  checkFirstDayIsEqualLastDay() {
+    if (this.startDate && this.endDate) {
+      return this.startDate.day === this.endDate.day
+    }
+
+    return false;
+  }
+
   /**
    * Mark as selected requested day
    * - **Rules**
@@ -204,18 +209,21 @@ export class DataPickerRangeComponent implements OnInit {
    * - When start date has selected but try select date before start date, mark as the first date
    * - When start date has selected mark as second date
    * - When all dates are selected mark as the new first date
-   * @param selectedDay Iday
+   * @param selectedDay IDay
    * @returns void
    */
   selectDay(selectedDay: IDay): void {
-    const key = this.getMonthKey(
+    const monthKey = PickerHelper.makeMonthKey(
       selectedDay.fullDate.getMonth(),
       this.currentYear
     );
 
-    const month = this.MapMonths.get(key);
+    const month = this.mapMonths.get(monthKey);
 
     if (!month) return;
+
+    this.removeHighlightSelected();
+    this.removeHighlightRange();
 
     month.map((day) => {
       if (day.id === selectedDay.id) {
@@ -226,7 +234,6 @@ export class DataPickerRangeComponent implements OnInit {
           day.selected = true;
           this.startDate = day;
 
-          this.removeHightlight();
           this.loadDays();
           return;
         }
@@ -237,7 +244,6 @@ export class DataPickerRangeComponent implements OnInit {
           this.startDate = day;
           this.endDate = undefined;
 
-          this.removeHightlight();
           this.loadDays();
           return;
         }
@@ -247,8 +253,6 @@ export class DataPickerRangeComponent implements OnInit {
           day.selected = true;
           this.endDate = day;
 
-          this.removeHightlight();
-          this.highlightRange();
           this.loadDays();
           return;
         }
@@ -259,7 +263,6 @@ export class DataPickerRangeComponent implements OnInit {
           this.startDate = day;
           this.endDate = undefined;
 
-          this.removeHightlight();
           this.loadDays();
           return;
         }
@@ -268,42 +271,74 @@ export class DataPickerRangeComponent implements OnInit {
   }
 
   /**
-   * Remove hightlight range
+   * Remove highlight range
+   * keep in days selected
    */
-  private removeHightlight(): void {
-    Array.from(this.MapMonths.keys()).map((key) => {
-      const month = this.MapMonths.get(key);
+  private removeHighlightRange(): void {
+    Array.from(this.mapMonths.keys()).map((key) => {
+      const month = this.mapMonths.get(key);
 
       if (!month) return;
 
       month.map((day) => {
         if (!day.id) return;
 
-        if (this.startDate && this.startDate.id === day.id) {
-          return;
-        }
+        if (this.startDate && this.startDate.id === day.id) return
 
-        if (this.endDate && this.endDate.id === day.id) {
-          return;
-        }
+        if (this.endDate && this.endDate.id === day.id) return
 
-        day.selected = false;
+        day.inRange = false;
+        this.removeHighlightSelected();
+      });
+    });
+  }
+
+  private removeAllHighlight() {
+    Array.from(this.mapMonths.keys()).map((key) => {
+      const month = this.mapMonths.get(key);
+
+      if (!month) return;
+
+      month.map((day) => {
+        if (!day.id) return;
+
         day.inRange = false;
       });
     });
   }
 
   /**
-   * Hightlight range
+   * Remove highlight selected
+   * keep in days selected
+   */
+  private removeHighlightSelected() {
+    Array.from(this.mapMonths.keys()).map((key) => {
+      const month = this.mapMonths.get(key);
+
+      if (!month) return;
+
+      month.map((day) => {
+        if (!day.id) return;
+
+        if (this.startDate && this.startDate.id === day.id) return
+
+        if (this.endDate && this.endDate.id === day.id) return
+
+        day.selected = false;
+      });
+    });
+  }
+
+  /**
+   * highlight range
    */
   private highlightRange(): void {
-    if (!this.startDate) return;
-    if (!this.endDate) return;
+    if (!this.startDate && !this.endDate) return;
 
     this.countDaysRange = 2;
 
-    Array.from(this.MapMonths.keys()).map((key) => {
-      const month = this.MapMonths.get(key);
+    Array.from(this.mapMonths.keys()).map((key) => {
+      const month = this.mapMonths.get(key);
 
       if (!month) return;
 
@@ -326,7 +361,7 @@ export class DataPickerRangeComponent implements OnInit {
   /**
    * Pass to previous month
    */
-  onPreviousMonth(): void {
+  loadPreviousMonth(): void {
     this.currentMonth--;
 
     if (this.currentMonth < 0) {
@@ -341,7 +376,7 @@ export class DataPickerRangeComponent implements OnInit {
   /**
    * Pass to next month
    */
-  onNextMonth(): void {
+  loadNextMonth(): void {
     this.currentMonth++;
 
     if (this.currentMonth > 11) {
@@ -351,44 +386,6 @@ export class DataPickerRangeComponent implements OnInit {
 
     this.loadDays();
     this.highlightRange();
-  }
-
-  private createMatrixDays(days: any[]): any[][] {
-    let matrix = [],
-      i,
-      k;
-
-    for (i = 0, k = -1; i < days.length; i++) {
-      if (i % 7 === 0) {
-        k++;
-        matrix[k] = [];
-      }
-
-      // @ts-ignore
-      matrix[k].push(days[i]);
-    }
-
-    return matrix;
-  }
-
-  private base64(): string {
-    let result = '';
-    const characters =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    for (let i = 0; i < 65; i++) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
-  }
-
-  /**
-   * Make a monthkey
-   * @param month - number
-   * @returns string
-   */
-  private getMonthKey(month: number, year: number): string {
-    return `${fullMonth[month]}-${year}`;
   }
 
   /**
@@ -403,26 +400,26 @@ export class DataPickerRangeComponent implements OnInit {
   }
 
   getFullMonth(): string {
-    return fullMonth[this.currentMonth];
+    return DateHelper.fullMonth[this.currentMonth];
   }
 
   /* Macros */
   /**
-   * Macro to clear hightlight range
+   * Macro to clear highlight range
    */
-  private runMacroClear(): void {
+  private macroClear(): void {
     this.countDaysRange = 0;
     this.startDate = undefined;
     this.endDate = undefined;
-    this.removeHightlight();
+    this.removeHighlightRange();
   }
 
   /**
-   * Macro to hightlight all year
+   * Macro to highlight all year
    */
-  private runMacroThisYear(): void {
-    const firstMonth = this.laodMonth(0, this.currentYear);
-    const lastMonth = this.laodMonth(11, this.currentYear);
+  private macroThisYear(): void {
+    const firstMonth = this.loadMonth(0, this.currentYear);
+    const lastMonth = this.loadMonth(11, this.currentYear);
 
     const firstYearDay = firstMonth[0];
     const lastYearDay = lastMonth[lastMonth.length - 1];
@@ -437,33 +434,41 @@ export class DataPickerRangeComponent implements OnInit {
   }
 
   /**
-   * Macro to hightlight the week
+   * Macro to highlight the week
    */
-  private runMacroThisWeek(): void {
-    const firstWeekday = this.currentDay.getDate() - this.currentDay.getDay();
-    const lastWeekDay = firstWeekday + 6;
+  private macroThisWeek(): void {
+    const firstDayOfWeek = this.currentDay.getDate() - this.currentDay.getDay();
+    const lastDayOfWeek = firstDayOfWeek + 6;
 
-    const days = this.MapMonths.get(
-      `${fullMonth[this.currentMonth]}-${this.currentYear}`
-    );
+    const monthKey = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear)
+
+    const days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
     days.map((day) => {
-      if (day.day === String(firstWeekday)) {
+      if (day.day === String(firstDayOfWeek)) {
         day.selected = true;
 
         this.startDate = day;
       }
 
-      if (this.startDate && day.day === String(lastWeekDay)) {
+      if (day.day === String(lastDayOfWeek)) {
+        day.selected = true;
+
+        this.endDate = day;
+
+        return;
+      }
+
+      if (this.startDate && day.day === String(lastDayOfWeek)) {
         day.selected = true;
 
         this.endDate = day;
       }
     });
 
-    if (lastWeekDay > 31 || lastWeekDay > 30) {
+    if (lastDayOfWeek > 31 || lastDayOfWeek > 30) {
       const day = days[days.length - 1];
 
       day.selected = true;
@@ -471,44 +476,44 @@ export class DataPickerRangeComponent implements OnInit {
       this.endDate = day;
     }
 
-    this.highlightRange();
+    this.highlightRange()
   }
 
   /**
-   * Macro to hightlight the month
+   * Macro to highlight the month
    */
-  private runMacroThisMonth(): void {
+  private macroThisMonth(): void {
     let index: number;
 
-    const month = this.MapMonths.get(
-      `${fullMonth[this.currentMonth]}-${this.currentYear}`
-    );
+    const monthKey = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear)
 
-    if (!month) return;
+    const days = this.mapMonths.get(monthKey);
 
-    index = month.findIndex(({ day }) => day);
+    if (!days) return;
 
-    month[index].selected = true;
+    index = days.findIndex(({day}) => day);
 
-    this.startDate = month[index];
+    days[index].selected = true;
 
-    month[month.length - 1].selected = true;
+    this.startDate = days[index];
 
-    this.endDate = month[month.length - 1];
+    days[days.length - 1].selected = true;
+
+    this.endDate = days[days.length - 1];
 
     this.highlightRange();
   }
 
   /**
-   * Macro to hightlight the last thirty days
+   * Macro to highlight the last thirty days
    */
-  private runMacroLastThirtyDays(): void {
+  private macroLastThirtyDays(): void {
     let month = this.currentMonth;
     let year = this.currentYear;
 
-    let key: string = this.getMonthKey(month, year);
+    let monthKey: string = PickerHelper.makeMonthKey(month, year);
 
-    let days = this.MapMonths.get(key);
+    let days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
@@ -534,11 +539,11 @@ export class DataPickerRangeComponent implements OnInit {
     }
 
     if (this.currentMonth !== month) {
-      this.laodMonth(month, year);
+      this.loadMonth(month, year);
 
-      key = this.getMonthKey(month, year);
+      monthKey = PickerHelper.makeMonthKey(month, year);
 
-      days = this.MapMonths.get(key);
+      days = this.mapMonths.get(monthKey);
 
       if (!days) return;
 
@@ -563,15 +568,15 @@ export class DataPickerRangeComponent implements OnInit {
   }
 
   /**
-   * Macro to hightlight the last fifteen days
+   * Macro to highlight the last fifteen days
    */
-  private runMacroLastFifteenDays(): void {
+  private macroLastFifteenDays(): void {
     let month = this.currentMonth;
     let year = this.currentYear;
 
-    let key: string = this.getMonthKey(month, year);
+    let monthKey: string = PickerHelper.makeMonthKey(month, year);
 
-    let days = this.MapMonths.get(key);
+    let days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
@@ -597,11 +602,11 @@ export class DataPickerRangeComponent implements OnInit {
     }
 
     if (this.currentMonth !== month) {
-      this.laodMonth(month, year);
+      this.loadMonth(month, year);
 
-      key = this.getMonthKey(month, year);
+      monthKey = PickerHelper.makeMonthKey(month, year);
 
-      days = this.MapMonths.get(key);
+      days = this.mapMonths.get(monthKey);
 
       if (!days) return;
 
@@ -626,15 +631,15 @@ export class DataPickerRangeComponent implements OnInit {
   }
 
   /**
-   * Macro to hightlight the last ninety days
+   * Macro to highlight the last ninety days
    */
-  private runMacroLastNinetyDays(): void {
+  private macroLastNinetyDays(): void {
     let month = this.currentMonth;
     let year = this.currentYear;
 
-    let key: string = this.getMonthKey(month, year);
+    let monthKey: string = PickerHelper.makeMonthKey(month, year);
 
-    let days = this.MapMonths.get(key);
+    let days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
@@ -661,11 +666,11 @@ export class DataPickerRangeComponent implements OnInit {
       month = Math.abs(month);
     }
 
-    this.laodMonth(month, year);
+    this.loadMonth(month, year);
 
-    key = this.getMonthKey(month, year);
+    monthKey = PickerHelper.makeMonthKey(month, year);
 
-    days = this.MapMonths.get(key);
+    days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
@@ -686,11 +691,11 @@ export class DataPickerRangeComponent implements OnInit {
       month = Math.abs(month);
     }
 
-    this.laodMonth(month, year);
+    this.loadMonth(month, year);
 
-    key = this.getMonthKey(month, year);
+    monthKey = PickerHelper.makeMonthKey(month, year);
 
-    days = this.MapMonths.get(key);
+    days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
@@ -716,7 +721,7 @@ export class DataPickerRangeComponent implements OnInit {
   }
 }
 
-interface IDay {
+export interface IDay {
   id: string;
   day: string;
   fullDate: Date;
@@ -724,20 +729,6 @@ interface IDay {
   selected: boolean;
 }
 
-const fullMonth = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
 
 type IMacro =
   | 'last-week'
@@ -749,11 +740,3 @@ type IMacro =
   | 'this-year'
   | 'clear'
   | 'today';
-
-interface IDay {
-  id: string;
-  day: string;
-  fullDate: Date;
-  inRange: boolean;
-  selected: boolean;
-}

@@ -8,10 +8,10 @@
     <div class="selected-months">
       <div>{{ getFullMonth() }} - {{ currentYear }}</div>
       <div class="buttons">
-        <button (click)="onPreviousMonth()">
+        <button (click)="loadPreviousMonth()">
           <span class="material-symbols-outlined"> chevron_left </span>
         </button>
-        <button (click)="onNextMonth()">
+        <button (click)="loadNextMonth()">
           <span class="material-symbols-outlined"> chevron_right </span>
         </button>
       </div>
@@ -20,52 +20,53 @@
   <main>
     <div class="options">
       <ul>
-        <li (click)="onMacro('this-week')">This week</li>
-        <li (click)="onMacro('this-month')">This month</li>
-        <li (click)="onMacro('this-year')">This year</li>
-        <li (click)="onMacro('last-15-days')">Last fiteen days</li>
-        <li (click)="onMacro('last-30-days')">Last thirty days</li>
-        <li (click)="onMacro('last-90-days')">Last ninety days</li>
-        <li (click)="onMacro('clear')">Clear</li>
+        <li (click)="runMacro(MacroEnum.THIS_WEEK)">This week</li>
+        <li (click)="runMacro(MacroEnum.THIS_MONTH)">This month</li>
+        <li (click)="runMacro(MacroEnum.THIS_YEAR)">This year</li>
+        <li (click)="runMacro(MacroEnum.LAST_15_DAYS)">Last fifteen days</li>
+        <li (click)="runMacro(MacroEnum.LAST_30_DAYS)">Last thirty days</li>
+        <li (click)="runMacro(MacroEnum.LAST_90_DAYS)">Last ninety days</li>
+        <li (click)="runMacro(MacroEnum.CLEAR)">Clear</li>
       </ul>
     </div>
     <div class="calendar">
       <table>
         <thead>
-          <th>s</th>
-          <th>m</th>
-          <th>t</th>
-          <th>w</th>
-          <th>t</th>
-          <th>f</th>
-          <th>s</th>
+        <th>s</th>
+        <th>m</th>
+        <th>t</th>
+        <th>w</th>
+        <th>t</th>
+        <th>f</th>
+        <th>s</th>
         </thead>
         <tbody>
-          <tr *ngFor="let week of days">
-            <td *ngFor="let day of week">
-              <button
-                *ngIf="day"
-                class="day"
-                [ngClass]="{
+        <tr *ngFor="let week of days">
+          <td *ngFor="let day of week">
+            <button
+              *ngIf="day"
+              class="day"
+              [ngClass]="{
                   selected: day.selected,
                   endDate: checkEndDate(day.id),
                   inRange: day.inRange
                 }"
-                (click)="selectDay(day)"
-              >
-                <spand
+              (click)="selectDay(day)"
+            >
+                <span
                   class="span"
                   *ngIf="day.day"
                   [ngClass]="{
                     inRange: day.inRange,
-                    selected: day.selected
+                    selected: day.selected,
+                    sameDay: checkFirstDayIsEqualLastDay()
                   }"
                 >
                   {{ day.day }}
-                </spand>
-              </button>
-            </td>
-          </tr>
+                </span>
+            </button>
+          </td>
+        </tr>
         </tbody>
       </table>
     </div>

@@ -8,7 +8,7 @@ import { FormControl } from '@angular/forms';
 })
 export class DataPickerInputComponent {
   public formControl = new FormControl();
-  public opened: boolean = false;
+  public opened: boolean = true;
 
   public onOpen() {
     this.opened = !this.opened;
