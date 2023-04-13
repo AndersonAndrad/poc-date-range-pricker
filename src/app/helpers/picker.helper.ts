@@ -14,6 +14,22 @@ export class PickerHelper {
   }
 
   /**
+   * Make a key to access last month
+   * @param currentMonth
+   * @param currentYear
+   */
+  static makeLastMonthKey(currentMonth: number, currentYear: number): string {
+    currentMonth--;
+
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+
+    return this.makeMonthKey(currentMonth, currentYear)
+  }
+
+  /**
    * Make a day
    * @param day {number}
    * @param month {number}

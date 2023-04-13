@@ -33,7 +33,7 @@ export class DataPickerRangeComponent implements OnInit {
 
   days: IDay[][] = [];
 
-  private currentDay = new Date('Mon Apr 01 2023 19:15:57 GMT-0300 (Brasilia Standard Time)');
+  private currentDay = new Date();
 
   constructor() {
     this.currentYear = this.currentDay.getFullYear();
@@ -389,8 +389,8 @@ export class DataPickerRangeComponent implements OnInit {
   }
 
   /**
-   * Check if is the and day
-   * @param dayId string
+   * Check if is end day
+   * @param dayId {string}
    * @returns boolean
    */
   checkEndDate(dayId: string): boolean {
@@ -437,46 +437,123 @@ export class DataPickerRangeComponent implements OnInit {
    * Macro to highlight the week
    */
   private macroThisWeek(): void {
-    const firstDayOfWeek = this.currentDay.getDate() - this.currentDay.getDay();
-    const lastDayOfWeek = firstDayOfWeek + 6;
+    let monthKey = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear)
 
-    const monthKey = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear)
-
-    const days = this.mapMonths.get(monthKey);
+    let days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
-    days.map((day) => {
-      if (day.day === String(firstDayOfWeek)) {
-        day.selected = true;
+    let currentDay: number = this.currentDay.getDate();
 
-        this.startDate = day;
+    const dayOfWeek = this.currentDay.getDay();
+    const daysAfterCurrentDay = 7 - (dayOfWeek + 1);
+    const daysBeforeCurrentDay = 7 - daysAfterCurrentDay;
+
+    const markAfterDays = (data: DaysToCheck) => {
+      if(!data.days) return
+
+      let days = data.days
+
+      let monthKey = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear);
+
+      if (!days) return;
+
+      if (data.countDaysCheck === 0) {
+        days.map(day => {
+          if (day.day === String(currentDay)) {
+            day.selected = true
+            this.endDate = day;
+          }
+        })
+
+        return
       }
 
-      if (day.day === String(lastDayOfWeek)) {
-        day.selected = true;
+      currentDay =  currentDay + data.countDaysCheck
 
-        this.endDate = day;
+      while (data.countDaysCheck !== 0) {
+        let count = 0
+        const {day} = days[days.length - 1]
 
-        return;
+        if (currentDay + data.countDaysCheck > Number(day)) {
+          this.loadNextMonth();
+          monthKey = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear);
+
+          if(!this.mapMonths.has(monthKey)) break
+
+          days = this.mapMonths.get(monthKey)!;
+
+          currentDay = Number(days[data.countDaysCheck].day)
+        }
+
+        days.map(day => {
+          if (day.day === String(currentDay)) {
+            if (!this.endDate) {
+              day.selected = true;
+              this.endDate = day
+            }
+
+            day.inRange = true;
+          }
+        })
+
+        data.countDaysCheck--
+        currentDay--
+        count++
+
+        if (count > 10) break
       }
-
-      if (this.startDate && day.day === String(lastDayOfWeek)) {
-        day.selected = true;
-
-        this.endDate = day;
-      }
-    });
-
-    if (lastDayOfWeek > 31 || lastDayOfWeek > 30) {
-      const day = days[days.length - 1];
-
-      day.selected = true;
-
-      this.endDate = day;
     }
 
+
+    markAfterDays({days, countDaysCheck: daysAfterCurrentDay});
+    this.markBeforeDays({days, countDaysCheck: daysBeforeCurrentDay});
+
     this.highlightRange()
+  }
+
+  private markBeforeDays(data: DaysToCheck) {
+    if(!data.days) return
+
+    let days = data.days;
+    let currentDay: number = this.currentDay.getDate();
+
+    while(data.countDaysCheck !== 0) {
+      let count: number = 0;
+
+      if(currentDay <= 0){
+        this.loadPreviousMonth();
+        const monthKey = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear);
+
+        if(!this.mapMonths.has(monthKey)) break
+
+        days = this.mapMonths.get(monthKey)!;
+
+        currentDay = days.filter(({day}) => day).length
+      }
+
+
+      days.map(day => {
+        if (day.day === String(currentDay)) {
+          day.inRange = true
+
+          if(!this.endDate){
+            day.selected = true;
+            this.endDate = day
+          }
+
+          if (data.countDaysCheck === 1) {
+            day.selected = true
+            this.startDate = day
+          }
+        }
+      })
+
+      currentDay--
+      data.countDaysCheck--
+
+      if(count > 10) break
+    }
   }
 
   /**
@@ -508,61 +585,13 @@ export class DataPickerRangeComponent implements OnInit {
    * Macro to highlight the last thirty days
    */
   private macroLastThirtyDays(): void {
-    let month = this.currentMonth;
-    let year = this.currentYear;
-
-    let monthKey: string = PickerHelper.makeMonthKey(month, year);
+    let monthKey: string = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear);
 
     let days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
-    days.map((day) => {
-      if (day.day !== String(this.currentDay.getDate())) return;
-
-      day.selected = true;
-
-      this.endDate = day;
-    });
-
-    if (!this.endDate) return;
-
-    let currentDay: number = Number(this.endDate.day) - 14;
-
-    if (currentDay < 0) {
-      month = month - 1;
-
-      if (month < 0) {
-        year = year - 1;
-        month = 11;
-      }
-    }
-
-    if (this.currentMonth !== month) {
-      this.loadMonth(month, year);
-
-      monthKey = PickerHelper.makeMonthKey(month, year);
-
-      days = this.mapMonths.get(monthKey);
-
-      if (!days) return;
-
-      const lastDay = days[days.length - 1];
-
-      currentDay = Math.abs(currentDay);
-
-      currentDay = currentDay - Number(lastDay.day) - 1;
-
-      currentDay = Math.abs(currentDay);
-    }
-
-    days.map((day) => {
-      if (day.day !== String(currentDay)) return;
-
-      day.selected = true;
-
-      this.startDate = day;
-    });
+    this.markBeforeDays({days, countDaysCheck: 30})
 
     this.highlightRange();
   }
@@ -571,61 +600,13 @@ export class DataPickerRangeComponent implements OnInit {
    * Macro to highlight the last fifteen days
    */
   private macroLastFifteenDays(): void {
-    let month = this.currentMonth;
-    let year = this.currentYear;
-
-    let monthKey: string = PickerHelper.makeMonthKey(month, year);
+    let monthKey: string = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear);
 
     let days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
-    days.map((day) => {
-      if (day.day !== String(this.currentDay.getDate())) return;
-
-      day.selected = true;
-
-      this.endDate = day;
-    });
-
-    if (!this.endDate) return;
-
-    let currentDay: number = Number(this.endDate.day) - 14;
-
-    if (currentDay < 0) {
-      month = month - 1;
-
-      if (month < 0) {
-        year = year - 1;
-        month = 11;
-      }
-    }
-
-    if (this.currentMonth !== month) {
-      this.loadMonth(month, year);
-
-      monthKey = PickerHelper.makeMonthKey(month, year);
-
-      days = this.mapMonths.get(monthKey);
-
-      if (!days) return;
-
-      const lastDay = days[days.length - 1];
-
-      currentDay = Math.abs(currentDay);
-
-      currentDay = currentDay - Number(lastDay.day) - 1;
-
-      currentDay = Math.abs(currentDay);
-    }
-
-    days.map((day) => {
-      if (day.day !== String(currentDay)) return;
-
-      day.selected = true;
-
-      this.startDate = day;
-    });
+    this.markBeforeDays({days, countDaysCheck: 15})
 
     this.highlightRange();
   }
@@ -634,88 +615,13 @@ export class DataPickerRangeComponent implements OnInit {
    * Macro to highlight the last ninety days
    */
   private macroLastNinetyDays(): void {
-    let month = this.currentMonth;
-    let year = this.currentYear;
-
-    let monthKey: string = PickerHelper.makeMonthKey(month, year);
+    let monthKey: string = PickerHelper.makeMonthKey(this.currentMonth, this.currentYear);
 
     let days = this.mapMonths.get(monthKey);
 
     if (!days) return;
 
-    days.map((day) => {
-      if (day.day !== String(this.currentDay.getDate())) return;
-
-      day.selected = true;
-
-      this.endDate = day;
-    });
-
-    if (!this.endDate) return;
-
-    let currentDay: number = Number(this.endDate.day) - 89;
-
-    if (currentDay < 0) {
-      month = month - 1;
-
-      if (month < 0) {
-        year = year - 1;
-        month = Math.abs(month) - 11;
-      }
-
-      month = Math.abs(month);
-    }
-
-    this.loadMonth(month, year);
-
-    monthKey = PickerHelper.makeMonthKey(month, year);
-
-    days = this.mapMonths.get(monthKey);
-
-    if (!days) return;
-
-    let lastDay = days[days.length - 1];
-
-    currentDay = Math.abs(currentDay);
-
-    currentDay = Number(lastDay.day) - currentDay;
-
-    if (currentDay < 0) {
-      month = month - 1;
-
-      if (month < 0) {
-        year = year - 1;
-        month = Math.abs(month) - 11;
-      }
-
-      month = Math.abs(month);
-    }
-
-    this.loadMonth(month, year);
-
-    monthKey = PickerHelper.makeMonthKey(month, year);
-
-    days = this.mapMonths.get(monthKey);
-
-    if (!days) return;
-
-    lastDay = days[days.length - 1];
-
-    currentDay = Math.abs(currentDay);
-
-    currentDay = currentDay - Number(lastDay.day);
-
-    currentDay = currentDay - Number(lastDay.day) - 1;
-
-    currentDay = Math.abs(currentDay);
-
-    days.map((day) => {
-      if (day.day !== String(currentDay)) return;
-
-      day.selected = true;
-
-      this.startDate = day;
-    });
+    this.markBeforeDays({days, countDaysCheck: 90})
 
     this.highlightRange();
   }
@@ -729,6 +635,10 @@ export interface IDay {
   selected: boolean;
 }
 
+interface DaysToCheck {
+  days?: IDay[],
+  countDaysCheck: number,
+}
 
 type IMacro =
   | 'last-week'
