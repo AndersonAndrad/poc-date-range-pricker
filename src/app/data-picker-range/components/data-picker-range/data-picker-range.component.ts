@@ -137,6 +137,7 @@ export class DataPickerRangeComponent implements OnInit {
       }
     });
 
+    this.goToCurrentMonth();
     this.highlightRange();
   }
 
@@ -152,30 +153,41 @@ export class DataPickerRangeComponent implements OnInit {
     this.endDate = undefined;
 
     this.removeHighlightRange();
+    this.goToCurrentMonth();
 
     switch (macro) {
       case MacroEnum.CLEAR:
         this.macroClear();
-        return;
+        break
       case MacroEnum.THIS_YEAR:
         this.macroThisYear();
-        return;
+        break
       case MacroEnum.THIS_WEEK:
         this.macroThisWeek();
-        return;
+        break
       case MacroEnum.THIS_MONTH:
         this.macroThisMonth();
-        return;
+        break
       case MacroEnum.LAST_15_DAYS:
         this.macroLastFifteenDays();
-        return;
+        break
       case MacroEnum.LAST_30_DAYS:
         this.macroLastThirtyDays();
-        return;
+        break
       case MacroEnum.LAST_90_DAYS:
         this.macroLastNinetyDays();
-        return;
+        break
     }
+
+    this.goToCurrentMonth();
+  }
+
+  private goToCurrentMonth(){
+    this.currentDay = new Date();
+    this.currentMonth = this.currentDay.getMonth();
+    this.currentYear = this.currentDay.getFullYear();
+
+    this.loadDays();
   }
 
   onClose() {
