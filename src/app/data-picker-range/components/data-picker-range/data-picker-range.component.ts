@@ -269,6 +269,15 @@ export class DataPickerRangeComponent implements OnInit {
           return;
         }
 
+        /* When start and end date is select but try select date after start date*/
+        if(this.startDate && this.endDate && day.fullDate > this.startDate.fullDate) {
+          day.selected = true;
+          this.endDate = day;
+
+          this.loadDays();
+          return
+        }
+
         /* When start and end date has selected but try select other date */
         if (this.startDate && this.endDate) {
           day.selected = true;
