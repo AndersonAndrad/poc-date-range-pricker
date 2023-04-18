@@ -15,6 +15,10 @@
 
   &.selected {
     background: #DBEABF;
+  }
+
+  &.startDate{
+    background: #DBEABF;
     border-radius: 50% 0  0 50%;
   }
 
@@ -38,7 +42,7 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    width: 90%;
+    //width: 90%;
     height: 90%;
     line-height: 1;
     border-radius: 50%;
@@ -55,7 +59,7 @@
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
-      width: 90%;
+      //width: 90%;
       height: 90%;
       line-height: 1;
       border-radius: 50%;

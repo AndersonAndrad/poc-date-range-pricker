@@ -49,6 +49,7 @@
               [ngClass]="{
                   selected: day.selected,
                   endDate: checkEndDate(day.id),
+                  startDate: checkStartDate(day.id),
                   inRange: day.inRange
                 }"
               (click)="selectDay(day)"

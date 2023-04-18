@@ -420,6 +420,12 @@ export class DataPickerRangeComponent implements OnInit {
     return this.endDate.id === dayId;
   }
 
+  checkStartDate(dayId: string): boolean {
+    if(!this.startDate) return false;
+
+    return this.startDate.id === dayId;
+  }
+
   getFullMonth(): string {
     return DateHelper.fullMonth[this.currentMonth];
   }
