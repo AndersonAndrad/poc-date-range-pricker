@@ -13,7 +13,6 @@ export class DatePickerComponent {
   opened: boolean = false;
 
   onOpen() {
-    console.log('test');
     this.opened = !this.opened;
   }
 }

@@ -20,9 +20,9 @@ export class DatePickerCalendarComponent
   }
 
   ngOnInit(): void {
-    this.pathDay();
-
     this.setDays();
+
+    this.pathDay();
   }
 
   protected override selectDay(selectedDay: IDay) {
@@ -44,6 +44,8 @@ export class DatePickerCalendarComponent
       day.selected = true;
       this.date = day;
     });
+
+    this.submit();
   }
 
   private removeSelectsDays() {
