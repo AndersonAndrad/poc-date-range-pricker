@@ -5,6 +5,7 @@ import { AppComponent } from './app.component';
 import { DataPickerInputComponent } from './data-picker-range/components/data-picker-input/data-picker-input.component';
 import { DataPickerRangeComponent } from './data-picker-range/components/data-picker-range/data-picker-range.component';
 import { DatePickerCalendarComponent } from './date-picker-calendar/date-picker-calendar.component';
+import { DatePickerComponent } from './date-picker/date-picker.component';
 
 @NgModule({
   declarations: [
@@ -12,6 +13,7 @@ import { DatePickerCalendarComponent } from './date-picker-calendar/date-picker-
     DataPickerRangeComponent,
     DataPickerInputComponent,
     DatePickerCalendarComponent,
+    DatePickerComponent,
   ],
   imports: [BrowserModule, AppRoutingModule],
   providers: [],

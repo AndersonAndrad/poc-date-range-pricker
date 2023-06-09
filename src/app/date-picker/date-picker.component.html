@@ -1,0 +1,9 @@
+<div class="container" (click)="onOpen()">
+  <label *ngIf="control.value">{{ control.value | date }}</label>
+  <label *ngIf="!control.value">Select date</label>
+</div>
+<date-picker-calendar
+  *ngIf="opened"
+  [control]="control"
+  (closeEmmiter)="onOpen()"
+></date-picker-calendar>

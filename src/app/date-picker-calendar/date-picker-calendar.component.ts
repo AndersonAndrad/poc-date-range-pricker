@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 import { IDay } from '../data-picker-range/components/data-picker-range/data-picker-range.component';
 import { DatePickerHelper } from '../helpers/date-picker.helper';
@@ -13,8 +13,6 @@ export class DatePickerCalendarComponent
   extends DatePickerHelper
   implements OnInit
 {
-  @Output() onCloneEmitter = new EventEmitter<boolean>();
-
   date: IDay | undefined = undefined;
 
   constructor() {
@@ -27,7 +25,7 @@ export class DatePickerCalendarComponent
     this.setDays();
   }
 
-  selectDay(selectedDay: IDay) {
+  protected override selectDay(selectedDay: IDay) {
     this.removeSelectsDays();
 
     const month = selectedDay.fullDate.getMonth();
@@ -88,5 +86,12 @@ export class DatePickerCalendarComponent
       this.month = newDate.getMonth();
       this.year = newDate.getFullYear();
     });
+  }
+
+  protected override submit(): void {
+    if (!this.date) return;
+
+    this.control.setValue(this.date.fullDate);
+    this.close();
   }
 }

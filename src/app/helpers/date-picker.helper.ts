@@ -132,4 +132,6 @@ export class DatePickerHelper {
   }
 
   protected submit() {}
+
+  protected selectDay(selectedDay: IDay) {}
 }
