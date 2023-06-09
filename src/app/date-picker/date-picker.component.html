@@ -1,0 +1,57 @@
+<div class="container">
+  <header>
+    <div class="selected-days">
+      <label>{{ this.date?.fullDate | date }}</label>
+    </div>
+    <div class="selected-months">
+      <div>{{ getFullMonth(month) }} - {{ year }}</div>
+      <div class="buttons">
+        <button (click)="loadPreviousMonth()">
+          <span class="material-symbols-outlined"> chevron_left </span>
+        </button>
+        <button (click)="loadNextMonth()">
+          <span class="material-symbols-outlined"> chevron_right </span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="calendar">
+      <table>
+        <thead>
+          <th>s</th>
+          <th>m</th>
+          <th>t</th>
+          <th>w</th>
+          <th>t</th>
+          <th>f</th>
+          <th>s</th>
+        </thead>
+        <tbody>
+          <tr *ngFor="let week of days">
+            <td *ngFor="let day of week">
+              <button
+                *ngIf="day"
+                class="day"
+                [ngClass]="{ selected: day.selected, inRange: day.inRange }"
+                (click)="selectDay(day)"
+              >
+                <span
+                  class="span"
+                  *ngIf="day.day"
+                  [ngClass]="{ selected: day.selected, inRange: day.inRange }"
+                >
+                  {{ day.day }}
+                </span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <footer>
+    <button (click)="close()">Cancel</button>
+    <button (click)="submit()">Apply</button>
+  </footer>
+</div>

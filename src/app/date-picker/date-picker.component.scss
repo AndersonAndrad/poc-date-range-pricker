@@ -1,0 +1,150 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: fit-content;
+  background: #f8f8f8;
+  border: 1px solid #e5e5e5;
+  min-height: 350px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px;
+}
+
+.container header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.container header .selected-days {
+  display: flex;
+  gap: 10px;
+}
+
+.container header .selected-months {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  font-weight: bold;
+}
+
+.container header .selected-months .buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.container header .selected-months .buttons>button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  line-height: 1;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+}
+
+.container header .selected-months .buttons>button:hover {
+  background: none;
+  border: #7DB61C solid 0.5px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 90%;
+  height: 90%;
+  line-height: 1;
+  border-radius: 50%;
+  background: transparent;
+  padding: 9px 11px;
+}
+
+.container main {
+  display: flex;
+  flex-grow: 1;
+}
+
+.container main .calendar table {
+  border-collapse: collapse;
+}
+
+.container main .calendar table thead {
+  text-transform: uppercase;
+}
+
+.container main .calendar table tbody tr td .day {
+  width: 100%;
+  height: 100%;
+  background: none;
+  text-align: center;
+  outline: none;
+  font-family: inherit;
+  margin: 0;
+  border: none;
+}
+
+.container main .calendar table tbody tr td .day .span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 90%;
+  line-height: 1;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+}
+
+.container main .calendar table tbody tr td .day .span:hover {
+  background: none;
+  border: #7DB61C solid 0.5px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 90%;
+  line-height: 1;
+  border-radius: 50%;
+  background: transparent;
+  padding: 9px 11px;
+}
+
+.container main .calendar table tbody tr td .day .span.selected {
+  background: #7DB61C;
+  color: #fff;
+}
+
+.container footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.container footer>button {
+  border: none;
+  padding: 10px 15px;
+  background: none;
+}
+
+.container footer>button:last-child {
+  border: none;
+  padding: 10px 15px;
+  background: none;
+}
+
+.container footer>button:hover {
+  cursor: pointer;
+  font-weight: bold;
+}
