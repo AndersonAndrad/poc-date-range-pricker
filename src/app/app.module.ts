@@ -4,14 +4,14 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { DataPickerInputComponent } from './data-picker-range/components/data-picker-input/data-picker-input.component';
 import { DataPickerRangeComponent } from './data-picker-range/components/data-picker-range/data-picker-range.component';
-import { DatePicker } from './date-picker/date-picker.component';
+import { DatePickerCalendarComponent } from './date-picker-calendar/date-picker-calendar.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     DataPickerRangeComponent,
     DataPickerInputComponent,
-    DatePicker,
+    DatePickerCalendarComponent,
   ],
   imports: [BrowserModule, AppRoutingModule],
   providers: [],

@@ -5,11 +5,14 @@ import { DatePickerHelper } from '../helpers/date-picker.helper';
 import { PickerHelper } from '../helpers/picker.helper';
 
 @Component({
-  selector: 'date-picker',
-  templateUrl: './date-picker.component.html',
-  styleUrls: ['./date-picker.component.scss'],
+  selector: 'date-picker-calendar',
+  templateUrl: './date-picker-calendar.component.html',
+  styleUrls: ['./date-picker-calendar.component.scss'],
 })
-export class DatePicker extends DatePickerHelper implements OnInit {
+export class DatePickerCalendarComponent
+  extends DatePickerHelper
+  implements OnInit
+{
   @Output() onCloneEmitter = new EventEmitter<boolean>();
 
   date: IDay | undefined = undefined;
